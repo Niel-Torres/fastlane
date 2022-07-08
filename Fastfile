@@ -1,24 +1,59 @@
-lane :scanLocalPR do |options|
-    xcode_select("/Applications/Xcode.app")
-    scan(scheme: "MyProjectNameXcode",
-                  force_quit_simulator: true,
-                  reset_simulator: true,
-                  code_coverage: true,
-                  clean: true,
-                  destination: "platform=iOS Simulator,name=iPhone 13,OS=15.2",
-                  sdk: "iphonesimulator",
-                  workspace: "./MyProjectNameXcode.xcworkspace",
-                  parallel_testing: false,
-                  derived_data_path: "./DerivedData",
-                  output_directory: "./sonar-reports",
-                  skip_build: true)
-    slather(sonarqube_xml: true,
-            scheme: "MyProjectNameXcode",
-            build_directory: "./DerivedData",
-            output_directory: "./sonar-reports",
-            workspace: "./MyProjectNameXcode.xcworkspace",
-            proj: "./MyProjectNameXcode.xcodeproj",
-            ignore: ["Pods/*","SMAPIHelper/*","MyProjectNameXcodeTests/*","Frameworks/*","*View*","*ViewController*","*Analytics*"])
-    swiftlint(output_file: "./sonar-reports/swiftlint.txt", ignore_exit_status: true)
-    sonar(branch_name: options[:branch_name] ? options[:branch_name] : "unknown")
+# This file contains the fastlane.tools configuration
+# You can find the documentation at https://docs.fastlane.tools
+#
+# For a list of all available actions, check out
+#
+#     https://docs.fastlane.tools/actions
+#
+# For a list of all available plugins, check out
+#
+#     https://docs.fastlane.tools/plugins/available-plugins
+#
+
+# Uncomment the line if you want fastlane to automatically update itself
+# update_fastlane
+
+default_platform(:ios)
+
+appScheme = "#{ENV['appScheme']}"
+
+platform :ios do
+
+  desc "Run all lanes"
+  lane :scanLocalPR do
+    #lint
+    #build
+    coverage
+    sonar
+
   end
+
+  desc "Build the application"
+  lane :build do
+    scan(
+      scheme: "MyProjectNameXcode",
+      workspace: "MyProjectNameXcode.xcworkspace",
+      clean: true
+    )
+  end
+
+  desc "Calculate the code coverage"
+  lane :coverage do
+    slather(
+      scheme: "MyProjectNameXcode",
+      workspace: "MyProjectNameXcode.xcworkspace",
+      output_directory: "sonar-reports", 
+      proj: "MyProjectNameXcode.xcodeproj",
+      cobertura_xml: "true"
+    )
+  end
+
+  desc "Apply swift linting"
+  lane :lint do
+    swiftlint(
+      output_file: "sonar-reports/MyProjectNameXcode-swiftlint.txt",
+      ignore_exit_status: true
+    )
+  end
+
+end
