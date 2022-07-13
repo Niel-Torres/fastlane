@@ -23,27 +23,59 @@ platform :ios do
   lane :scanLocalPR do
     #lint
     #build
-    coverage
-    sonar
-
+    #coverage
+    #sonar
+    sonarLocalPR
   end
+
+  desc "Run sonar Local PR"
+  lane :sonarLocalPR do
+    xcode_select("/Applications/Xcode.app")
+    scan(
+      scheme: "MyProjectName", 
+      force_quit_simulator: true, 
+      reset_simulator: true, 
+      code_coverage: true, 
+      clean: true, 
+      destination: "platform=iOS Simulator,name=iPhone 13", 
+      sdk: "iphonesimulator",
+      workspace: "./MyProjectName.xcworkspace", 
+      parallel_testing: false,
+      derived_data_path: "./DerivedData", 
+      output_directory: "./reports", 
+      skip_build: true,
+      fail_build: false)
+    slather(
+      sonarqube_xml: true, 
+      scheme: "MyProjectName", 
+      build_directory: "./DerivedData", 
+      output_directory: "./reports", 
+      workspace: "./MyProjectName.xcworkspace", 
+      proj: "./MyProjectName.xcodeproj", 
+      ignore: ["Pods/**","SMAPIHelper/**","Frameworks/**","**/*View*","**/*ViewController*","**/*Analytics*","**/Analytics/*","MyProjectName/Business/Resources/**.html","MyProjectName/Localization/**.html"])
+    #lizard(source_folder: "[SOURCE_FOLDER]", language: "swift", export_type: "xml", report_file: "reports/lizard-report.xml")
+    #swiftlint(output_file: "./reports/swiftlint.txt", ignore_exit_status: true)
+    sonar
+  end
+
 
   desc "Build the application"
   lane :build do
     scan(
-      scheme: "MyProjectNameXcode",
-      workspace: "MyProjectNameXcode.xcworkspace",
-      clean: true
+      scheme: "MyProjectName",
+      workspace: "MyProjectName.xcworkspace",
+      clean: true,
+      fail_build: false
     )
   end
 
   desc "Calculate the code coverage"
   lane :coverage do
     slather(
-      scheme: "MyProjectNameXcode",
-      workspace: "MyProjectNameXcode.xcworkspace",
+      scheme: "MyProjectName",
+      workspace: "MyProjectName.xcworkspace",
       output_directory: "sonar-reports", 
-      proj: "MyProjectNameXcode.xcodeproj",
+      proj: "MyProjectName.xcodeproj",
       cobertura_xml: "true"
     )
   end
@@ -51,7 +83,7 @@ platform :ios do
   desc "Apply swift linting"
   lane :lint do
     swiftlint(
-      output_file: "sonar-reports/MyProjectNameXcode-swiftlint.txt",
+      output_file: "sonar-reports/MyProjectName-swiftlint.txt",
       ignore_exit_status: true
     )
   end
